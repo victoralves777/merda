@@ -21,6 +21,8 @@ import {
   ChevronRight,
   RotateCcw,
   Star,
+  LogOut,
+  XCircle,
 } from "lucide-react";
 import { SurrealDecorations } from "@/components/SurrealDecorations";
 import { getRandomQuestion } from "@/lib/questions";
@@ -33,6 +35,8 @@ import {
   fetchRoundVotes,
   updateRoomGameState,
   subscribeToGame,
+  leaveSupabaseRoom,
+  cancelSupabaseRoom,
   type SupabaseRoom,
   type SupabasePlayer,
   type SupabaseAnswer,
@@ -53,6 +57,7 @@ export default function JogoPage() {
   const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
   const [myNickname, setMyNickname] = useState<string>("Jogador");
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Estados da Sala
   const [room, setRoom] = useState<SupabaseRoom | null>(null);
@@ -197,6 +202,15 @@ export default function JogoPage() {
 
     const unsubscribe = subscribeToGame(roomId, {
       onRoomChange: (updatedRoom) => {
+        if (updatedRoom.status === "cancelled" || updatedRoom.game_state === "cancelled") {
+          showSuccessToast("🛑 O Dono da Sala cancelou a partida!");
+          setTimeout(() => {
+            leaveSupabaseRoom(myPlayerId);
+            router.push("/");
+          }, 1500);
+          return;
+        }
+
         setRoom(updatedRoom);
         if (updatedRoom.game_state && updatedRoom.game_state !== gameState) {
           handleGameStateTransition(updatedRoom.game_state as any, updatedRoom);
@@ -456,6 +470,18 @@ export default function JogoPage() {
     showSuccessToast,
   ]);
 
+  // Sair da Partida (Jogador) ou Cancelar Partida (ADM)
+  const handleExitOrCancel = async () => {
+    if (isAdmin) {
+      await cancelSupabaseRoom(roomId, myPlayerId);
+      showSuccessToast("🛑 Partida cancelada.");
+    } else {
+      await leaveSupabaseRoom(myPlayerId);
+      showSuccessToast("🚪 Você saiu da partida.");
+    }
+    router.push("/");
+  };
+
   const timerPercentage = Math.max(0, Math.min(100, (timeLeft / (gameState === "voting" ? 25 : answerTime)) * 100));
   const isTimeCritical = timeLeft <= 5;
 
@@ -481,13 +507,30 @@ export default function JogoPage() {
         {/* CABEÇALHO SUPERIOR */}
         <header className="w-full mb-3">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <Link
-              href="/lobby"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/30 text-purple-300 hover:text-white transition-all shadow-[0_0_15px_rgba(168,85,247,0.2)] active:scale-95 cursor-pointer"
-              title="Voltar ao Lobby"
+            {/* BOTÃO SAIR / CANCELAR PARTIDA */}
+            <button
+              type="button"
+              id="btn-sair-ou-cancelar-jogo"
+              onClick={() => setShowExitConfirm(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.2)] ${
+                isAdmin
+                  ? "bg-rose-950/70 hover:bg-rose-900 border-rose-500/50 text-rose-300 hover:text-white"
+                  : "bg-purple-950/60 hover:bg-rose-950/80 border-purple-500/30 hover:border-rose-500/50 text-purple-300 hover:text-rose-200"
+              }`}
+              title={isAdmin ? "Cancelar Partida" : "Sair da Partida"}
             >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
+              {isAdmin ? (
+                <>
+                  <XCircle className="w-4 h-4 text-rose-400" />
+                  <span className="hidden xs:inline">Cancelar</span>
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4 text-rose-400" />
+                  <span className="hidden xs:inline">Sair</span>
+                </>
+              )}
+            </button>
 
             {/* BADGE DE FASE / RODADA */}
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-950/80 border border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
@@ -923,6 +966,52 @@ export default function JogoPage() {
             </div>
           </div>
         )}
+        {/* MODAL DE CONFIRMAÇÃO DE SAÍDA / CANCELAMENTO */}
+        <AnimatePresence>
+          {showExitConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowExitConfirm(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-xs bg-[#14082c] border-2 border-purple-500/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(168,85,247,0.4)] text-center text-slate-100"
+              >
+                <span className="text-3xl">{isAdmin ? "🛑" : "🚪"}</span>
+                <h3 className="text-lg font-bold font-[family-name:var(--font-fredoka)] mt-2">
+                  {isAdmin ? "Cancelar a Partida?" : "Deseja sair da partida?"}
+                </h3>
+                <p className="text-xs text-purple-300/80 my-3 leading-relaxed">
+                  {isAdmin
+                    ? "Como Dono da Sala, ao cancelar, a partida será encerrada imediatamente para todos os jogadores."
+                    : "Você será desconectado da partida e retornará à página inicial."}
+                </p>
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowExitConfirm(false)}
+                    className="py-2.5 rounded-xl bg-purple-900/50 hover:bg-purple-900/80 border border-purple-500/30 text-purple-200 text-xs font-bold uppercase transition-colors cursor-pointer"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExitOrCancel}
+                    className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold uppercase transition-colors cursor-pointer shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                  >
+                    {isAdmin ? "Sim, Cancelar" : "Sim, Sair"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </main>
   );

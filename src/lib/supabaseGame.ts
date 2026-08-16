@@ -523,6 +523,29 @@ export async function leaveSupabaseRoom(playerId?: string | null): Promise<void>
   clearLocalSession();
 }
 
+// 7. CANCELAR / ENCERRAR SALA (SOMENTE ADM)
+export async function cancelSupabaseRoom(roomId?: string | null, playerId?: string | null): Promise<{ success: boolean; error?: string }> {
+  const activeRoomId =
+    roomId || (typeof window !== "undefined" ? localStorage.getItem("merdas_room_id") : null);
+
+  if (isSupabaseConfigured() && activeRoomId && !activeRoomId.startsWith("local_")) {
+    try {
+      await supabase
+        .from("rooms")
+        .update({
+          status: "cancelled",
+          game_state: "cancelled",
+        })
+        .eq("id", activeRoomId);
+    } catch (e: any) {
+      console.warn("[cancelSupabaseRoom] Erro:", e);
+    }
+  }
+
+  await leaveSupabaseRoom(playerId);
+  return { success: true };
+}
+
 // 7. INSCREVER NO REALTIME DO SUPABASE EXCLUSIVAMENTE POR ROOM_ID (UUID)
 export function subscribeToRoom(
   roomId: string,

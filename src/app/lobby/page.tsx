@@ -18,6 +18,7 @@ import {
   Hourglass,
   AlertTriangle,
   RefreshCw,
+  XCircle,
 } from "lucide-react";
 import { SurrealDecorations } from "@/components/SurrealDecorations";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -25,6 +26,7 @@ import { getRandomQuestion } from "@/lib/questions";
 import {
   fetchRoomAndPlayers,
   leaveSupabaseRoom,
+  cancelSupabaseRoom,
   subscribeToRoom,
   startSupabaseGame,
   getPlayerColor,
@@ -183,6 +185,14 @@ export default function LobbyPage() {
         loadRoomData(room.id);
       },
       onRoomChange: (updatedRoom: SupabaseRoom) => {
+        if (updatedRoom.status === "cancelled" || updatedRoom.game_state === "cancelled") {
+          showToast("🛑 O Dono da Sala cancelou a partida!");
+          setTimeout(() => {
+            leaveSupabaseRoom(currentPlayerId);
+            router.push("/");
+          }, 1500);
+          return;
+        }
         if (updatedRoom.status === "playing") {
           navigateToGame();
         }
@@ -258,9 +268,15 @@ export default function LobbyPage() {
     }, 800);
   };
 
-  // Sair da Sala (marca is_online = false no Supabase e limpa sessão)
+  // Sair ou Cancelar Sala
   const handleExitRoom = async () => {
-    await leaveSupabaseRoom(currentPlayerId);
+    if (userRole === "admin") {
+      await cancelSupabaseRoom(room?.id, currentPlayerId);
+      showToast("🛑 Sala cancelada.");
+    } else {
+      await leaveSupabaseRoom(currentPlayerId);
+      showToast("🚪 Você saiu da sala.");
+    }
     router.push("/");
   };
 
@@ -276,19 +292,32 @@ export default function LobbyPage() {
 
       {/* Container Principal Mobile-First */}
       <div className="relative z-10 w-full max-w-md mx-auto flex-1 flex flex-col justify-between px-4 pt-4 pb-36 sm:pb-40">
-        {/* TOPO: Botão Sair + Badge SALA CRIADA 💩 */}
+        {/* TOPO: Botão Sair/Cancelar + Badge SALA CRIADA 💩 */}
         <header className="w-full mb-4">
           <div className="flex items-center justify-between">
-            {/* Botão Sair da Sala */}
+            {/* Botão Sair ou Cancelar Sala */}
             <button
               type="button"
               id="btn-sair-sala"
               onClick={() => setShowExitConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-purple-950/60 hover:bg-rose-950/80 border border-purple-500/30 hover:border-rose-500/50 text-purple-300 hover:text-rose-200 text-xs font-semibold transition-all shadow-[0_0_15px_rgba(168,85,247,0.2)] active:scale-95 cursor-pointer"
-              title="Sair da Sala"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.2)] ${
+                userRole === "admin"
+                  ? "bg-rose-950/70 hover:bg-rose-900 border-rose-500/50 text-rose-300 hover:text-white"
+                  : "bg-purple-950/60 hover:bg-rose-950/80 border-purple-500/30 hover:border-rose-500/50 text-purple-300 hover:text-rose-200"
+              }`}
+              title={userRole === "admin" ? "Cancelar Sala" : "Sair da Sala"}
             >
-              <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Sair</span>
+              {userRole === "admin" ? (
+                <>
+                  <XCircle className="w-4 h-4 text-rose-400" />
+                  <span>Cancelar Sala</span>
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4 text-rose-400" />
+                  <span>Sair</span>
+                </>
+              )}
             </button>
 
             {/* Badge de Título da Sala */}
@@ -596,12 +625,14 @@ export default function LobbyPage() {
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 className="relative w-full max-w-xs bg-[#14082c] border-2 border-purple-500/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(168,85,247,0.4)] text-center text-slate-100"
               >
-                <span className="text-3xl">🚪</span>
+                <span className="text-3xl">{userRole === "admin" ? "🛑" : "🚪"}</span>
                 <h3 className="text-lg font-bold font-[family-name:var(--font-fredoka)] mt-2">
-                  Deseja sair da sala?
+                  {userRole === "admin" ? "Cancelar a Sala?" : "Deseja sair da sala?"}
                 </h3>
-                <p className="text-xs text-purple-300/80 my-3">
-                  Você será desconectado e retornará à página inicial.
+                <p className="text-xs text-purple-300/80 my-3 leading-relaxed">
+                  {userRole === "admin"
+                    ? "Como Dono da Sala, ao cancelar, a sala será encerrada imediatamente para todos os amigos."
+                    : "Você será desconectado e retornará à página inicial."}
                 </p>
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <button
@@ -609,14 +640,14 @@ export default function LobbyPage() {
                     onClick={() => setShowExitConfirm(false)}
                     className="py-2.5 rounded-xl bg-purple-900/50 hover:bg-purple-900/80 border border-purple-500/30 text-purple-200 text-xs font-bold uppercase transition-colors cursor-pointer"
                   >
-                    Ficar
+                    Voltar
                   </button>
                   <button
                     type="button"
                     onClick={handleExitRoom}
                     className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold uppercase transition-colors cursor-pointer shadow-[0_0_15px_rgba(225,29,72,0.4)]"
                   >
-                    Sair
+                    {userRole === "admin" ? "Sim, Cancelar" : "Sim, Sair"}
                   </button>
                 </div>
               </motion.div>
