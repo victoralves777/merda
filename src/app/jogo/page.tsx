@@ -228,15 +228,35 @@ export default function JogoPage() {
       onAnswersChange: async () => {
         const aList = await fetchRoundAnswers(roomId, currentRound);
         setAnswersList(aList);
+        const pList = await fetchRoomPlayers(roomId);
+        setPlayers(pList);
+        const activeCount = pList.filter((p) => p.is_online !== false).length || pList.length;
+        if (activeCount > 0 && aList.length >= activeCount) {
+          if (roomId) {
+            updateRoomGameState(roomId, "voting");
+          }
+          setGameState("voting");
+          setTimeLeft(25);
+        }
       },
       onVotesChange: async () => {
         const vList = await fetchRoundVotes(roomId, currentRound);
         setVotesList(vList);
+        const pList = await fetchRoomPlayers(roomId);
+        setPlayers(pList);
+        const activeCount = pList.filter((p) => p.is_online !== false).length || pList.length;
+        if (activeCount > 0 && vList.length >= activeCount) {
+          if (roomId) {
+            updateRoomGameState(roomId, "result");
+          }
+          setGameState("result");
+          setTimeLeft(10);
+        }
       },
     });
 
-    // Polling redundante a cada 2.5s
-    const pollInterval = setInterval(reloadData, 2500);
+    // Polling redundante a cada 2s
+    const pollInterval = setInterval(reloadData, 2000);
 
     return () => {
       unsubscribe();
@@ -322,27 +342,33 @@ export default function JogoPage() {
     }
   }, [roomId, gameState, isAdmin, currentRound, totalRounds, answerTime]);
 
-  // Se todos os jogadores responderam, avança imediatamente para a votação
+  // Se todos os jogadores responderam, avança IMEDIATAMENTE para a votação (sem esperar o timer)
   useEffect(() => {
-    if (gameState === "answering" && players.length > 0 && answersList.length >= players.length) {
-      if (isAdmin && roomId) {
+    const activePlayers = players.filter((p) => p.is_online !== false);
+    const totalNeeded = activePlayers.length > 0 ? activePlayers.length : players.length;
+
+    if (gameState === "answering" && totalNeeded > 0 && answersList.length >= totalNeeded) {
+      if (roomId) {
         updateRoomGameState(roomId, "voting");
       }
       setGameState("voting");
       setTimeLeft(25);
     }
-  }, [gameState, answersList.length, players.length, isAdmin, roomId]);
+  }, [gameState, answersList.length, players, roomId]);
 
-  // Se todos os jogadores votaram, avança imediatamente para o resultado
+  // Se todos os jogadores votaram, avança IMEDIATAMENTE para o resultado
   useEffect(() => {
-    if (gameState === "voting" && players.length > 0 && votesList.length >= players.length) {
-      if (isAdmin && roomId) {
+    const activePlayers = players.filter((p) => p.is_online !== false);
+    const totalNeeded = activePlayers.length > 0 ? activePlayers.length : players.length;
+
+    if (gameState === "voting" && totalNeeded > 0 && votesList.length >= totalNeeded) {
+      if (roomId) {
         updateRoomGameState(roomId, "result");
       }
       setGameState("result");
       setTimeLeft(10);
     }
-  }, [gameState, votesList.length, players.length, isAdmin, roomId]);
+  }, [gameState, votesList.length, players, roomId]);
 
   // 4. SUBMETER RESPOSTA
   const handleSendAnswer = async (e?: React.FormEvent) => {
@@ -353,6 +379,15 @@ export default function JogoPage() {
     await submitRoundAnswer(roomId, myPlayerId, currentRound, myAnswer);
     const updated = await fetchRoundAnswers(roomId, currentRound);
     setAnswersList(updated);
+
+    const activePlayers = players.filter((p) => p.is_online !== false);
+    const totalNeeded = activePlayers.length > 0 ? activePlayers.length : players.length;
+
+    if (totalNeeded > 0 && updated.length >= totalNeeded) {
+      await updateRoomGameState(roomId, "voting");
+      setGameState("voting");
+      setTimeLeft(25);
+    }
   };
 
   // 5. SUBMETER VOTO
@@ -366,6 +401,15 @@ export default function JogoPage() {
     await submitRoundVote(roomId, myPlayerId, answerId, currentRound);
     const updated = await fetchRoundVotes(roomId, currentRound);
     setVotesList(updated);
+
+    const activePlayers = players.filter((p) => p.is_online !== false);
+    const totalNeeded = activePlayers.length > 0 ? activePlayers.length : players.length;
+
+    if (totalNeeded > 0 && updated.length >= totalNeeded) {
+      await updateRoomGameState(roomId, "result");
+      setGameState("result");
+      setTimeLeft(10);
+    }
   };
 
   // 6. AVANÇAR MANUALMENTE PELO ADM
