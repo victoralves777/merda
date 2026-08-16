@@ -59,12 +59,12 @@ export async function createSupabaseRoom(
   maxPlayers: number,
   hostCoins: number = 0
 ): Promise<{ success: boolean; room?: SupabaseRoom; player?: SupabasePlayer; error?: string; requiredCoins?: number }> {
-  // Validação de Caução de Segurança (5 moedas por rodada)
-  const requiredCoins = rounds * 5;
+  // Validação de Caução de Segurança (2 moedas por rodada)
+  const requiredCoins = rounds * 2;
   if (hostCoins < requiredCoins) {
     return {
       success: false,
-      error: `Caução de segurança necessária: para uma sala de ${rounds} rodadas, você precisa ter pelo menos ${requiredCoins} moedas em conta (garantia caso perca rodadas). Suas moedas NÃO serão gastas na entrada! Você só perde se falar a pior merda da rodada. Seu saldo atual é ${hostCoins} moedas.`,
+      error: `Caução de segurança necessária: para uma sala de ${rounds} rodadas, você precisa ter pelo menos ${requiredCoins} moedas em conta (garantia caso perca rodadas: -2 moedas por derrota). Suas moedas NÃO serão gastas na criação! O mais votado ganha +1 moeda e os demais perdem -2. Seu saldo atual é ${hostCoins} moedas.`,
       requiredCoins,
     };
   }
@@ -228,13 +228,13 @@ export async function joinSupabaseRoom(
         return { success: false, error: "A partida já começou nesta sala! 💩" };
       }
 
-      // 3. Validação de Caução de Segurança (5 moedas por rodada)
+      // 3. Validação de Caução de Segurança (2 moedas por rodada)
       const rounds = roomData.total_rounds || 10;
-      const requiredCoins = rounds * 5;
+      const requiredCoins = rounds * 2;
       if (playerCoins < requiredCoins) {
         return {
           success: false,
-          error: `Caução de segurança necessária: esta sala tem ${rounds} rodadas e exige pelo menos ${requiredCoins} moedas em conta (garantia caso você perca rodadas). Suas moedas NÃO serão gastas para entrar! Você só perde se falar a pior merda. Seu saldo atual é ${playerCoins} moedas.`,
+          error: `Caução de segurança necessária: esta sala tem ${rounds} rodadas e exige pelo menos ${requiredCoins} moedas em conta (garantia caso você perca rodadas: -2 moedas por derrota). Suas moedas NÃO serão gastas para entrar! O mais votado ganha +1 moeda e os demais perdem -2. Seu saldo atual é ${playerCoins} moedas.`,
           requiredCoins,
         };
       }

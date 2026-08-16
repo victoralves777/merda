@@ -26,7 +26,7 @@ export default function CriarSalaPage() {
   const timeOptions = ["30s", "45s", "60s"];
   const playerOptions = [4, 6, 8, 10];
 
-  const requiredCoins = rounds * 5;
+  const requiredCoins = rounds * 2;
   const isBalanceSufficient = coinsBalance >= requiredCoins;
 
   // Gerador de código aleatório de 5 caracteres (Ex: FDP69, ALC99, ESDTP)
@@ -49,7 +49,7 @@ export default function CriarSalaPage() {
 
     if (!isBalanceSufficient) {
       setErrorMessage(
-        `Saldo insuficiente! Para ${rounds} rodadas, você precisa de no mínimo ${requiredCoins} moedas (5 por rodada). Seu saldo é ${coinsBalance} moedas.`
+        `Saldo insuficiente! Para ${rounds} rodadas, você precisa de no mínimo ${requiredCoins} moedas (garantia de 2 por rodada). Seu saldo é ${coinsBalance} moedas.`
       );
       return;
     }
@@ -115,7 +115,7 @@ export default function CriarSalaPage() {
               <span className="text-xl">🎪</span>
             </h1>
             <p className="text-xs sm:text-sm text-purple-300/80 font-medium mt-0.5">
-              “Monte sua bagunça com caução de 5 moedas por rodada.”
+              “Monte sua bagunça com caução de 2 moedas por rodada.”
             </p>
           </div>
         </header>
@@ -144,7 +144,7 @@ export default function CriarSalaPage() {
                   <div className="p-2.5 rounded-xl bg-purple-950/80 border border-lime-400/30 text-[11px] text-lime-300 font-medium flex items-center gap-1.5">
                     <span>💡</span>
                     <span>
-                      Suas moedas <strong>permanecem na sua conta</strong>! Você só perde 5 moedas se for o mais votado da rodada.
+                      Suas moedas <strong>permanecem na sua conta</strong>! O mais votado ganha +1 moeda e os demais perdem -2 moedas por rodada.
                     </span>
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export default function CriarSalaPage() {
             <div className="grid grid-cols-3 gap-2.5">
               {roundOptions.map((opt) => {
                 const isSelected = rounds === opt;
-                const cost = opt * 5;
+                const cost = opt * 2;
                 return (
                   <button
                     key={opt}

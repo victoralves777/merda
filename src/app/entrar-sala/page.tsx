@@ -145,7 +145,7 @@ export default function EntrarSalaPage() {
                   <div className="p-2.5 rounded-xl bg-purple-950/80 border border-lime-400/30 text-[11px] text-lime-300 font-medium flex items-center gap-1.5">
                     <span>💡</span>
                     <span>
-                      Suas moedas <strong>permanecem na sua conta</strong>! Você só perde 5 moedas se for o mais votado da rodada.
+                      Suas moedas <strong>permanecem na sua conta</strong>! O mais votado ganha +1 moeda e os demais perdem -2 moedas por rodada.
                     </span>
                   </div>
                 </div>

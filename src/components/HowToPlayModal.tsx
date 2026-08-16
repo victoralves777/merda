@@ -88,9 +88,22 @@ export function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps) {
                   3
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Vote e Vença</h3>
+                  <h3 className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Vote e Ganhe Pontos</h3>
                   <p className="text-xs text-purple-200/80 leading-relaxed mt-0.5">
-                    Todos votam nas respostas mais engraçadas. Quem acumular mais pontos coroa a vitória do caos!
+                    Todos votam nas respostas mais engraçadas. Quem acumular mais votos leva a rodada e o pódio final!
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-purple-950/40 border border-purple-500/20">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center shrink-0 text-sm">
+                  4
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider">Economia de Moedas</h3>
+                  <p className="text-xs text-purple-200/80 leading-relaxed mt-0.5">
+                    O mais votado da rodada <strong className="text-yellow-300 font-bold">ganha +1 moeda 🪙</strong> e todo o restante <strong className="text-rose-400 font-bold">perde 2 moedas 💸</strong>!
                   </p>
                 </div>
               </div>

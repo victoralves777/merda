@@ -404,32 +404,44 @@ export default function JogoPage() {
     }
   }, [gameState, answersList.length, votesList.length]);
 
-  // Vencedor (mais votado / falou a pior merda) da rodada
+  // Vencedores (mais votados) da rodada
   let maxVotes = 0;
-  let winningAnswerId: string | null = null;
-  let worstPlayerId: string | null = null;
-
   answersList.forEach((a) => {
     const c = voteCounts[a.id] || 0;
     if (c > maxVotes) {
       maxVotes = c;
-      winningAnswerId = a.id;
-      worstPlayerId = a.player_id;
     }
   });
 
-  // Punição de -5 moedas para quem foi o mais votado da rodada
+  const winningAnswerIds = new Set<string>();
+  const winningPlayerIds = new Set<string>();
+
+  if (maxVotes > 0) {
+    answersList.forEach((a) => {
+      if ((voteCounts[a.id] || 0) === maxVotes) {
+        winningAnswerIds.add(a.id);
+        winningPlayerIds.add(a.player_id);
+      }
+    });
+  }
+
+  // Regra de Moedas: Mais votado GANHA +1 moeda, todos os outros PERDEM 2 moedas
   useEffect(() => {
     if (
       gameState === "result" &&
       !deductedRoundsRef.current.has(currentRound) &&
       answersList.length > 0
     ) {
-      if (maxVotes > 0 && worstPlayerId) {
+      if (maxVotes > 0) {
         deductedRoundsRef.current.add(currentRound);
-        if (worstPlayerId === myPlayerId) {
-          addCoinsToBalance(-5);
-          showSuccessToast("💩💸 Você falou a pior merda e perdeu 5 moedas!");
+        if (myPlayerId && winningPlayerIds.has(myPlayerId)) {
+          // O mais votado ganha +1 moeda
+          addCoinsToBalance(1);
+          showSuccessToast("🏆🪙 Parabéns! Você foi o mais votado e GANHOU +1 moeda!");
+        } else if (myPlayerId) {
+          // Todos os outros perdem 2 moedas
+          addCoinsToBalance(-2);
+          showSuccessToast("💩💸 Você não foi o mais votado e perdeu 2 moedas!");
         }
       }
     }
@@ -438,7 +450,7 @@ export default function JogoPage() {
     currentRound,
     answersList.length,
     maxVotes,
-    worstPlayerId,
+    winningPlayerIds,
     myPlayerId,
     addCoinsToBalance,
     showSuccessToast,
@@ -735,11 +747,11 @@ export default function JogoPage() {
           <section className="w-full my-auto flex flex-col gap-3">
             <div className="text-center mb-1">
               <h2 className="text-xl sm:text-2xl font-black font-[family-name:var(--font-fredoka)] uppercase tracking-tight text-white flex items-center justify-center gap-2">
-                <span>A PIOR MERDA DA RODADA!</span>
-                <span>💩💸</span>
+                <span>RESULTADO DA RODADA!</span>
+                <span>👑💩</span>
               </h2>
               <p className="text-xs text-purple-300 font-medium">
-                O mais votado foi punido e perdeu <strong className="text-rose-400 font-mono">-5 Moedas</strong>!
+                O mais votado ganhou <strong className="text-yellow-300 font-mono">+1 Moeda 🏆</strong> e os demais perderam <strong className="text-rose-400 font-mono">-2 Moedas 💩💸</strong>!
               </p>
             </div>
 
@@ -747,7 +759,7 @@ export default function JogoPage() {
             <div className="flex flex-col gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
               {answersList.map((item) => {
                 const votes = voteCounts[item.id] || 0;
-                const isWorst = item.id === winningAnswerId && votes > 0;
+                const isWinner = winningAnswerIds.has(item.id) && votes > 0;
 
                 return (
                   <motion.div
@@ -755,31 +767,35 @@ export default function JogoPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${
-                      isWorst
-                        ? "bg-gradient-to-r from-rose-950/90 via-[#260a33] to-rose-950/90 border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.45)]"
+                      isWinner
+                        ? "bg-gradient-to-r from-amber-950/80 via-[#2a0e38] to-purple-950/80 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]"
                         : "bg-[#14082c] border-purple-500/30"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-10 h-10 rounded-2xl border flex items-center justify-center text-lg shrink-0 ${
-                          isWorst
-                            ? "bg-rose-900/80 border-rose-400 text-xl animate-bounce"
+                          isWinner
+                            ? "bg-yellow-500/20 border-yellow-400 text-xl animate-bounce"
                             : "bg-purple-900 border-purple-400/40"
                         }`}
                       >
-                        {isWorst ? "💩" : "🤡"}
+                        {isWinner ? "👑" : "🤡"}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white">“{item.answer_text}”</p>
                         <span className="text-xs text-purple-300 font-medium flex items-center gap-1.5 mt-0.5">
                           <span>Por:</span>
-                          <strong className={isWorst ? "text-rose-300 font-bold" : "text-purple-200"}>
+                          <strong className={isWinner ? "text-yellow-300 font-bold" : "text-purple-200"}>
                             {item.player_nickname || "Jogador"}
                           </strong>
-                          {isWorst && (
+                          {isWinner ? (
+                            <span className="px-1.5 py-0.2 rounded bg-yellow-400/20 text-yellow-300 text-[10px] font-bold uppercase border border-yellow-400/40">
+                              Mais Votado 🏆
+                            </span>
+                          ) : (
                             <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold uppercase border border-rose-500/40">
-                              Mais Votado
+                              -2 Moedas
                             </span>
                           )}
                         </span>
@@ -787,11 +803,15 @@ export default function JogoPage() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      {isWorst ? (
-                        <span className="font-mono font-black text-sm text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] block">
-                          -5 Moedas 💩💸
+                      {isWinner ? (
+                        <span className="font-mono font-black text-sm text-yellow-300 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)] block">
+                          +1 Moeda 🏆🪙
                         </span>
-                      ) : null}
+                      ) : (
+                        <span className="font-mono font-bold text-xs text-rose-400 block">
+                          -2 Moedas 💸
+                        </span>
+                      )}
                       <span className="font-mono font-black text-xs text-lime-300 block">
                         +{votes * 100} pts
                       </span>
