@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-dark: #07020d;
+    --card-dark: #120726;
+    --acid-green: #39ff14;
+    --neon-purple: #b026ff;
+    --hot-pink: #ff007f;
+    --electric-cyan: #00f0ff;
+    --crazy-yellow: #ffee00;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: #f8fafc;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom glow effects */
+.glow-purple {
+  filter: drop-shadow(0 0 16px rgba(176, 38, 255, 0.55));
+}
+
+.glow-pink {
+  filter: drop-shadow(0 0 16px rgba(255, 0, 127, 0.55));
+}
+
+.glow-acid {
+  filter: drop-shadow(0 0 16px rgba(57, 255, 20, 0.55));
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 20px rgba(176, 38, 255, 0.7), 0 0 40px rgba(176, 38, 255, 0.4);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 20px rgba(57, 255, 20, 0.7), 0 0 40px rgba(57, 255, 20, 0.4);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 20px rgba(255, 0, 127, 0.7), 0 0 40px rgba(255, 0, 127, 0.4);
+}
+
+/* 3D Tactile Arcade Buttons */
+.btn-3d-green {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+  box-shadow: 0 6px 0 #14532d, 0 10px 25px rgba(34, 197, 94, 0.4);
+  transition: all 0.12s ease-out;
+}
+
+.btn-3d-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #14532d, 0 15px 30px rgba(34, 197, 94, 0.55);
+}
+
+.btn-3d-green:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #14532d, 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.btn-3d-pink {
+  background: linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #db2777 100%);
+  box-shadow: 0 6px 0 #831843, 0 10px 25px rgba(236, 72, 153, 0.4);
+  transition: all 0.12s ease-out;
+}
+
+.btn-3d-pink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #831843, 0 15px 30px rgba(236, 72, 153, 0.55);
+}
+
+.btn-3d-pink:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #831843, 0 4px 15px rgba(236, 72, 153, 0.3);
+}
+
+/* Hypnotic Checkerboard Pattern */
+.bg-surreal-grid {
+  background-image: 
+    radial-gradient(circle at 50% 30%, rgba(147, 51, 234, 0.18) 0%, transparent 65%),
+    radial-gradient(circle at 10% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 90% 85%, rgba(34, 197, 94, 0.12) 0%, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+}
+
+/* Surreal Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(4deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-5deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 7s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 28s linear infinite;
+}
